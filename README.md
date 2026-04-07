@@ -202,4 +202,3 @@ generate_data.py  →  returns.csv + products.csv + customers.csv
 
 **Ram** — Data Analyst  
 bollamramprakash@gmail.com  
-https://github.com/ramprakash28
