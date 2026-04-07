@@ -1,0 +1,21 @@
+category,return_reason,cnt,total_cost,avg_csat
+Electronics,Defective / Damaged,3062,163320.46,2.08
+Electronics,Item Not as Described,1985,106696.67,2.72
+Electronics,Changed Mind,1808,93614.95,3.28
+Electronics,Wrong Item Sent,1568,84350.48,2.07
+Electronics,Sizing / Fit Issue,1116,57913.2,2.66
+Electronics,Arrived Late,733,38324.93,2.72
+Home & Kitchen,Defective / Damaged,2639,33895.34,2.07
+Apparel,Defective / Damaged,4169,30147.51,2.04
+Electronics,Duplicate Order,444,23127.79,2.75
+Sports & Outdoors,Defective / Damaged,1374,22573.72,2.04
+Home & Kitchen,Item Not as Described,1753,22219.79,2.72
+Home & Kitchen,Changed Mind,1569,19820.57,3.29
+Apparel,Item Not as Described,2610,19056.98,2.73
+Home & Kitchen,Wrong Item Sent,1347,17067.07,2.02
+Apparel,Changed Mind,2292,16744.13,3.3
+Electronics,Gift / Unwanted,303,15930.49,3.27
+Apparel,Wrong Item Sent,2071,15118.9,2.06
+Sports & Outdoors,Item Not as Described,830,13462.77,2.72
+Home & Kitchen,Sizing / Fit Issue,1012,12710.04,2.66
+Sports & Outdoors,Changed Mind,751,12176.18,3.29

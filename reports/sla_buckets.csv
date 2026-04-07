@@ -1,0 +1,5 @@
+sla_bucket,return_count,pct,avg_csat
+0-2 days (Fast),16881,32.46,2.64
+3-5 days (On-Time),20266,38.97,2.52
+6-10 days (Delayed),13502,25.97,2.47
+11+ days (Critical),1351,2.6,2.61

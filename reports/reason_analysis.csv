@@ -1,0 +1,9 @@
+return_reason,return_count,total_cost,avg_cost,avg_csat,avg_resolution_days,pct_of_total
+Defective / Damaged,14690,263024.54,17.91,2.06,4.6,28.25
+Item Not as Described,9350,169736.27,18.15,2.72,5.6,17.98
+Changed Mind,8312,149619.38,18.0,3.29,2.7,15.98
+Wrong Item Sent,7215,132755.18,18.4,2.05,3.6,13.88
+Sizing / Fit Issue,5210,93267.75,17.9,2.69,2.7,10.02
+Arrived Late,3623,63788.1,17.61,2.72,6.7,6.97
+Duplicate Order,2069,36951.41,17.86,2.71,1.7,3.98
+Gift / Unwanted,1531,26285.83,17.17,3.32,4.6,2.94

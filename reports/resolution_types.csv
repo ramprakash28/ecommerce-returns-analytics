@@ -1,0 +1,5 @@
+resolution_type,return_count,avg_csat,avg_resolution_days,total_cost
+Rejected,2636,2.57,4.3,48540.92
+Exchange,14433,2.55,4.2,259828.88
+Store Credit,7804,2.54,4.2,139930.63
+Refund,27127,2.54,4.2,487128.03

@@ -1,0 +1,4 @@
+rec_id,title,finding,action,estimated_impact
+REC-01,Reduce Defect-Driven Returns in Electronics,Defective/Damaged in Electronics = $163320 cost CSAT 2.08/5,Enforce pre-shipment QC with suppliers. Target 20% defect reduction.,~$32664 cost savings per cycle
+REC-02,Fix Item Not as Described in Electronics,$106697 total cost CSAT 2.72/5. Product listing accuracy issues.,Audit descriptions for top-20 return SKUs. Add 360 images and size guides.,~$26674 cost savings + CSAT lift
+REC-03,Expedite Resolution in Central Region,Central region lowest CSAT 2.52/5 and $17.84 avg cost per return.,Add dedicated returns agent. Automate SLA tracking. Target <= 5 days.,35% reduction in manual reporting +0.4 CSAT improvement

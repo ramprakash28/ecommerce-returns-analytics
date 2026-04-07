@@ -1,0 +1,6 @@
+region,total_returns,total_cost,avg_cost_per_return,avg_resolution_days,avg_csat
+South,14120,251799.62,17.83,4.2,2.55
+East,12894,233624.95,18.12,4.2,2.54
+North,11419,208273.53,18.24,4.2,2.56
+West,9366,166793.06,17.81,4.2,2.55
+Central,4201,74937.3,17.84,4.2,2.52
