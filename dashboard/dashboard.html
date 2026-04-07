@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>E-Commerce Returns Analytics Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1117; --surface: #1a1d27; --surface2: #22263a;
+    --accent: #4f8ef7; --accent2: #7c5cbf; --accent3: #2dd4bf;
+    --red: #ef4444; --amber: #f59e0b; --green: #22c55e;
+    --text: #e2e8f0; --muted: #94a3b8; --border: #2d3748;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 18px 28px; display: flex; align-items: center; justify-content: space-between; }
+  header .logo { display: flex; align-items: center; gap: 12px; }
+  header .logo-icon { width: 36px; height: 36px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  header h1 { font-size: 18px; font-weight: 700; }
+  header p.sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .badge { background: var(--accent); color: #fff; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 12px; letter-spacing: 0.5px; }
+  .ts { font-size: 11px; color: var(--muted); }
+  .filters { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 28px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .filters label { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .filters select { background: var(--surface2); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 6px 28px 6px 10px; font-size: 13px; cursor: pointer; appearance: none; }
+  .filters select:focus { outline: none; border-color: var(--accent); }
+  .btn-reset { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 6px 14px; border-radius: 6px; font-size: 12px; cursor: pointer; }
+  .btn-reset:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-export { background: var(--accent); color: #fff; border: none; padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; margin-left: auto; }
+  main { padding: 24px 28px; max-width: 1600px; margin: 0 auto; }
+  .kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 24px; }
+  .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; position: relative; overflow: hidden; }
+  .kpi-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+  .kpi-card.blue::before { background: var(--accent); }
+  .kpi-card.purple::before { background: var(--accent2); }
+  .kpi-card.teal::before { background: var(--accent3); }
+  .kpi-card.red::before { background: var(--red); }
+  .kpi-card.amber::before { background: var(--amber); }
+  .kpi-label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 10px; }
+  .kpi-value { font-size: 28px; font-weight: 800; line-height: 1; }
+  .kpi-value.blue { color: var(--accent); } .kpi-value.purple { color: var(--accent2); }
+  .kpi-value.teal { color: var(--accent3); } .kpi-value.red { color: var(--red); } .kpi-value.amber { color: var(--amber); }
+  .kpi-sub { font-size: 11px; color: var(--muted); margin-top: 6px; }
+  .kpi-icon { position: absolute; right: 16px; top: 18px; font-size: 28px; opacity: .15; }
+  .chart-row { display: grid; gap: 16px; margin-bottom: 20px; }
+  .chart-row.col-2 { grid-template-columns: 1fr 1fr; }
+  .chart-row.col-21 { grid-template-columns: 2fr 1fr; }
+  .chart-row.col-12 { grid-template-columns: 1fr 2fr; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+  .card-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .card-sub { font-size: 11px; color: var(--muted); margin-bottom: 16px; }
+  .chart-wrap { position: relative; }
+  .chart-wrap canvas { width: 100% !important; }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { background: var(--surface2); color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--border); color: var(--text); white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface2); }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+  .pill.high { background: rgba(239,68,68,.2); color: var(--red); }
+  .pill.med { background: rgba(245,158,11,.2); color: var(--amber); }
+  .pill.low { background: rgba(34,197,94,.2); color: var(--green); }
+  .recs-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+  .rec-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+  .rec-badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 10px; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 10px; }
+  .rec-badge.r1 { background: rgba(239,68,68,.2); color: var(--red); }
+  .rec-badge.r2 { background: rgba(79,142,247,.2); color: var(--accent); }
+  .rec-badge.r3 { background: rgba(45,212,191,.2); color: var(--accent3); }
+  .rec-title { font-size: 14px; font-weight: 700; margin-bottom: 10px; }
+  .rec-finding { font-size: 12px; color: var(--muted); margin-bottom: 10px; line-height: 1.5; }
+  .rec-action { font-size: 12px; color: var(--text); background: var(--surface2); padding: 10px 12px; border-radius: 8px; line-height: 1.5; margin-bottom: 10px; }
+  .rec-impact { font-size: 12px; font-weight: 600; color: var(--green); }
+  .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .section-header h2 { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: var(--muted); }
+  .section-line { flex: 1; height: 1px; background: var(--border); }
+  .bar-mini { display: flex; align-items: center; gap: 8px; }
+  .bar-mini .fill { height: 6px; border-radius: 3px; background: var(--accent); }
+  .bar-mini span { font-size: 11px; color: var(--muted); min-width: 36px; }
+  @media (max-width: 1100px) { .kpi-grid { grid-template-columns: repeat(3,1fr); } .recs-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 700px) { .kpi-grid { grid-template-columns: 1fr 1fr; } .chart-row.col-2,.chart-row.col-21,.chart-row.col-12 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">
+    <div class="logo-icon">📦</div>
+    <div><h1>E-Commerce Returns Analytics</h1><p class="sub">Process Improvement Dashboard &nbsp;|&nbsp; Jan 2024 – Dec 2025</p></div>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;"><span class="badge">LIVE</span><span class="ts">Generated: 2026-03-31</span></div>
+</header>
+<div class="filters">
+  <label>Category</label>
+  <select id="f-category" onchange="applyFilters()">
+    <option value="all">All Categories</option>
+    <option>Apparel</option><option>Electronics</option><option>Home &amp; Kitchen</option>
+    <option>Beauty</option><option>Sports &amp; Outdoors</option><option>Toys &amp; Games</option><option>Books &amp; Media</option>
+  </select>
+  <label>Region</label>
+  <select id="f-region" onchange="applyFilters()">
+    <option value="all">All Regions</option>
+    <option>North</option><option>South</option><option>East</option><option>West</option><option>Central</option>
+  </select>
+  <label>Year</label>
+  <select id="f-year" onchange="applyFilters()">
+    <option value="all">All Years</option><option>2024</option><option>2025</option>
+  </select>
+  <label>Reason</label>
+  <select id="f-reason" onchange="applyFilters()">
+    <option value="all">All Reasons</option>
+    <option>Defective / Damaged</option><option>Item Not as Described</option><option>Changed Mind</option>
+    <option>Wrong Item Sent</option><option>Sizing / Fit Issue</option><option>Arrived Late</option>
+    <option>Duplicate Order</option><option>Gift / Unwanted</option>
+  </select>
+  <button class="btn-reset" onclick="resetFilters()">↺ Reset</button>
+  <button class="btn-export" onclick="exportCSV()">⬇ Export CSV</button>
+</div>
+<main>
+  <div class="kpi-grid">
+    <div class="kpi-card blue"><div class="kpi-label">Total Returns</div><div class="kpi-value blue" id="kpi-returns">52,000</div><div class="kpi-sub">Jan 2024 – Dec 2025</div><div class="kpi-icon">📦</div></div>
+    <div class="kpi-card red"><div class="kpi-label">Total Return Cost</div><div class="kpi-value red" id="kpi-cost">$935,428</div><div class="kpi-sub">Processing + Logistics</div><div class="kpi-icon">💸</div></div>
+    <div class="kpi-card purple"><div class="kpi-label">Avg Cost / Return</div><div class="kpi-value purple" id="kpi-avgcost">$17.99</div><div class="kpi-sub">Per transaction</div><div class="kpi-icon">🏷️</div></div>
+    <div class="kpi-card teal"><div class="kpi-label">Avg Resolution</div><div class="kpi-value teal" id="kpi-res">4.2 days</div><div class="kpi-sub">Order → Resolution</div><div class="kpi-icon">⏱️</div></div>
+    <div class="kpi-card amber"><div class="kpi-label">Avg CSAT</div><div class="kpi-value amber" id="kpi-csat">2.55 / 5</div><div class="kpi-sub">Customer satisfaction</div><div class="kpi-icon">⭐</div></div>
+  </div>
+  <div class="section-header"><div class="section-line"></div><h2>Volume &amp; Cost Trends</h2><div class="section-line"></div></div>
+  <div class="chart-row col-21">
+    <div class="card"><div class="card-title">Monthly Return Volume &amp; Cost</div><div class="card-sub">Returns count (bars) + Avg return cost (line) by month</div><div class="chart-wrap" style="height:240px;"><canvas id="chartMonthly"></canvas></div></div>
+    <div class="card"><div class="card-title">Resolution SLA Buckets</div><div class="card-sub">% of returns by resolution speed</div><div class="chart-wrap" style="height:200px;"><canvas id="chartSLA"></canvas></div><div id="sla-legend" style="margin-top:10px;font-size:11px;color:var(--muted);"></div></div>
+  </div>
+  <div class="section-header"><div class="section-line"></div><h2>Category &amp; Regional Breakdown</h2><div class="section-line"></div></div>
+  <div class="chart-row col-2">
+    <div class="card"><div class="card-title">Returns by Category</div><div class="card-sub">Volume + Total cost comparison</div><div class="chart-wrap" style="height:240px;"><canvas id="chartCategory"></canvas></div></div>
+    <div class="card"><div class="card-title">Returns by Region</div><div class="card-sub">Volume + Avg CSAT per region</div><div class="chart-wrap" style="height:240px;"><canvas id="chartRegion"></canvas></div></div>
+  </div>
+  <div class="section-header"><div class="section-line"></div><h2>Root-Cause Analysis</h2><div class="section-line"></div></div>
+  <div class="chart-row col-12">
+    <div class="card"><div class="card-title">Resolution Type Mix</div><div class="card-sub">How returns are resolved</div><div class="chart-wrap" style="height:220px;"><canvas id="chartResolution"></canvas></div></div>
+    <div class="card"><div class="card-title">Return Reasons — Pareto Analysis</div><div class="card-sub">Return volume (bars) + CSAT score (line) by root cause</div><div class="chart-wrap" style="height:220px;"><canvas id="chartReasons"></canvas></div></div>
+  </div>
+  <div class="section-header"><div class="section-line"></div><h2>Category × Reason Cost Heatmap (Top 20)</h2><div class="section-line"></div></div>
+  <div class="card" style="margin-bottom:20px;">
+    <div class="card-title">Cost Impact Matrix</div><div class="card-sub">Costliest category + return reason combinations</div>
+    <div class="table-wrap"><table id="heatmap-table"><thead><tr><th>Category</th><th>Return Reason</th><th>Volume</th><th>Total Cost</th><th>Avg Cost</th><th>CSAT</th><th>Cost Share</th></tr></thead><tbody id="heatmap-body"></tbody></table></div>
+  </div>
+  <div class="section-header"><div class="section-line"></div><h2>🎯 Process Improvement Recommendations</h2><div class="section-line"></div></div>
+  <div class="recs-grid">
+    <div class="rec-card"><span class="rec-badge r1">REC-01 · HIGH PRIORITY</span><div class="rec-title">Reduce Defect-Driven Returns in Electronics</div><div class="rec-finding">📊 'Defective / Damaged' in Electronics accounts for <strong>$163,320</strong> in return costs with avg CSAT <strong>2.08/5</strong>.</div><div class="rec-action">🔧 Partner with Electronics suppliers to enforce pre-shipment QC inspections. Target 20% defect reduction.</div><div class="rec-impact">💰 Estimated impact: ~$32,664 cost savings per cycle</div></div>
+    <div class="rec-card"><span class="rec-badge r2">REC-02 · MEDIUM PRIORITY</span><div class="rec-title">Fix Product Listing Accuracy Across Top Categories</div><div class="rec-finding">📊 'Item Not as Described' drives <strong>$169,736</strong> total cost. Electronics alone: $106,697 with CSAT 2.72/5.</div><div class="rec-action">🔧 Audit product descriptions for top-20 return SKUs. Add 360° images, size charts, verified buyer photos.</div><div class="rec-impact">💰 Estimated impact: ~$26,674–$66,750 cost savings + CSAT lift</div></div>
+    <div class="rec-card"><span class="rec-badge r3">REC-03 · EFFICIENCY WIN</span><div class="rec-title">Automate Resolution &amp; SLA Tracking</div><div class="rec-finding">📊 26% of returns take 6+ days to resolve. 'Arrived Late' has worst avg resolution time (6.7 days).</div><div class="rec-action">🔧 Deploy automated SLA tracking with 3-day escalation triggers. Add self-serve returns portal. Target ≤5 days.</div><div class="rec-impact">📉 Projected: 35% reduction in manual reporting workload</div></div>
+  </div>
+</main>
+<script>
+Chart.defaults.color='#94a3b8';Chart.defaults.borderColor='#2d3748';Chart.defaults.font.family="'Segoe UI',system-ui,sans-serif";Chart.defaults.font.size=11;
+const COLORS=['#4f8ef7','#7c5cbf','#2dd4bf','#f59e0b','#ef4444','#22c55e','#f97316','#a78bfa'];
+const RAW={
+  summary:{total_returns:52000,unique_orders:45863,return_rate_pct:113.38,total_return_cost:935428.46,avg_cost_per_return:17.99,avg_resolution_days:4.2,avg_csat:2.55},
+  by_category:[{category:"Apparel",total_returns:14614,total_cost:106138.91,avg_cost:7.26,avg_csat:2.55,pct_of_total:28.1},{category:"Electronics",total_returns:11019,total_cost:583278.97,avg_cost:52.93,avg_csat:2.55,pct_of_total:21.19},{category:"Home & Kitchen",total_returns:9714,total_cost:123343.95,avg_cost:12.7,avg_csat:2.55,pct_of_total:18.68},{category:"Beauty",total_returns:5039,total_cost:17328.14,avg_cost:3.44,avg_csat:2.54,pct_of_total:9.69},{category:"Sports & Outdoors",total_returns:4735,total_cost:77267.63,avg_cost:16.32,avg_csat:2.53,pct_of_total:9.11},{category:"Toys & Games",total_returns:3871,total_cost:20507.89,avg_cost:5.3,avg_csat:2.53,pct_of_total:7.44},{category:"Books & Media",total_returns:3008,total_cost:7562.97,avg_cost:2.51,avg_csat:2.56,pct_of_total:5.78}],
+  by_region:[{region:"South",total_returns:14120,total_cost:251799.62,avg_cost_per_return:17.83,avg_csat:2.55},{region:"East",total_returns:12894,total_cost:233624.95,avg_cost_per_return:18.12,avg_csat:2.54},{region:"North",total_returns:11419,total_cost:208273.53,avg_cost_per_return:18.24,avg_csat:2.56},{region:"West",total_returns:9366,total_cost:166793.06,avg_cost_per_return:17.81,avg_csat:2.55},{region:"Central",total_returns:4201,total_cost:74937.3,avg_cost_per_return:17.84,avg_csat:2.52}],
+  by_reason:[{return_reason:"Defective / Damaged",return_count:14690,total_cost:263024.54,avg_cost:17.91,avg_csat:2.06,avg_resolution_days:4.6,pct_of_total:28.25},{return_reason:"Item Not as Described",return_count:9350,total_cost:169736.27,avg_cost:18.15,avg_csat:2.72,avg_resolution_days:5.6,pct_of_total:17.98},{return_reason:"Changed Mind",return_count:8312,total_cost:149619.38,avg_cost:18.0,avg_csat:3.29,avg_resolution_days:2.7,pct_of_total:15.98},{return_reason:"Wrong Item Sent",return_count:7215,total_cost:132755.18,avg_cost:18.4,avg_csat:2.05,avg_resolution_days:3.6,pct_of_total:13.88},{return_reason:"Sizing / Fit Issue",return_count:5210,total_cost:93267.75,avg_cost:17.9,avg_csat:2.69,avg_resolution_days:2.7,pct_of_total:10.02},{return_reason:"Arrived Late",return_count:3623,total_cost:63788.1,avg_cost:17.61,avg_csat:2.72,avg_resolution_days:6.7,pct_of_total:6.97},{return_reason:"Duplicate Order",return_count:2069,total_cost:36951.41,avg_cost:17.86,avg_csat:2.71,avg_resolution_days:1.7,pct_of_total:3.98},{return_reason:"Gift / Unwanted",return_count:1531,total_cost:26285.83,avg_cost:17.17,avg_csat:3.32,avg_resolution_days:4.6,pct_of_total:2.94}],
+  monthly:[{month:"2024-01",year:2024,quarter:"Q1",total_returns:2148,total_cost:36854.29,avg_cost:17.16},{month:"2024-02",year:2024,quarter:"Q1",total_returns:2052,total_cost:36719.77,avg_cost:17.89},{month:"2024-03",year:2024,quarter:"Q1",total_returns:2192,total_cost:38442.09,avg_cost:17.54},{month:"2024-04",year:2024,quarter:"Q2",total_returns:2152,total_cost:39131.22,avg_cost:18.18},{month:"2024-05",year:2024,quarter:"Q2",total_returns:2243,total_cost:40509.17,avg_cost:18.06},{month:"2024-06",year:2024,quarter:"Q2",total_returns:2164,total_cost:40073.89,avg_cost:18.52},{month:"2024-07",year:2024,quarter:"Q3",total_returns:2157,total_cost:38587.47,avg_cost:17.89},{month:"2024-08",year:2024,quarter:"Q3",total_returns:2256,total_cost:40209.41,avg_cost:17.82},{month:"2024-09",year:2024,quarter:"Q3",total_returns:2178,total_cost:39075.38,avg_cost:17.94},{month:"2024-10",year:2024,quarter:"Q4",total_returns:2199,total_cost:37807.32,avg_cost:17.19},{month:"2024-11",year:2024,quarter:"Q4",total_returns:2065,total_cost:37521.75,avg_cost:18.17},{month:"2024-12",year:2024,quarter:"Q4",total_returns:2208,total_cost:40082.83,avg_cost:18.15},{month:"2025-01",year:2025,quarter:"Q1",total_returns:2244,total_cost:40200.17,avg_cost:17.91},{month:"2025-02",year:2025,quarter:"Q1",total_returns:2002,total_cost:37179.94,avg_cost:18.57},{month:"2025-03",year:2025,quarter:"Q1",total_returns:2177,total_cost:39281.08,avg_cost:18.04},{month:"2025-04",year:2025,quarter:"Q2",total_returns:2123,total_cost:36797.78,avg_cost:17.33},{month:"2025-05",year:2025,quarter:"Q2",total_returns:2221,total_cost:40624.83,avg_cost:18.29},{month:"2025-06",year:2025,quarter:"Q2",total_returns:2115,total_cost:37730.46,avg_cost:17.84},{month:"2025-07",year:2025,quarter:"Q3",total_returns:2213,total_cost:40216.32,avg_cost:18.17},{month:"2025-08",year:2025,quarter:"Q3",total_returns:2162,total_cost:39275.57,avg_cost:18.17},{month:"2025-09",year:2025,quarter:"Q3",total_returns:2145,total_cost:37952.89,avg_cost:17.69},{month:"2025-10",year:2025,quarter:"Q4",total_returns:2295,total_cost:43031.47,avg_cost:18.75},{month:"2025-11",year:2025,quarter:"Q4",total_returns:2132,total_cost:39656.48,avg_cost:18.6},{month:"2025-12",year:2025,quarter:"Q4",total_returns:2157,total_cost:38466.88,avg_cost:17.83}],
+  sla:[{sla_bucket:"0-2 days (Fast)",return_count:16881,pct:32.46,avg_csat:2.64},{sla_bucket:"3-5 days (On-Time)",return_count:20266,pct:38.97,avg_csat:2.52},{sla_bucket:"6-10 days (Delayed)",return_count:13502,pct:25.97,avg_csat:2.47},{sla_bucket:"11+ days (Critical)",return_count:1351,pct:2.6,avg_csat:2.61}],
+  resolution:[{resolution_type:"Refund",return_count:27127,avg_csat:2.54,total_cost:487128.03},{resolution_type:"Exchange",return_count:14433,avg_csat:2.55,total_cost:259828.88},{resolution_type:"Store Credit",return_count:7804,avg_csat:2.54,total_cost:139930.63},{resolution_type:"Rejected",return_count:2636,avg_csat:2.57,total_cost:48540.92}],
+  heatmap:[{category:"Electronics",return_reason:"Defective / Damaged",cnt:3062,total_cost:163320.46,avg_csat:2.08},{category:"Electronics",return_reason:"Item Not as Described",cnt:1985,total_cost:106696.67,avg_csat:2.72},{category:"Electronics",return_reason:"Changed Mind",cnt:1808,total_cost:93614.95,avg_csat:3.28},{category:"Electronics",return_reason:"Wrong Item Sent",cnt:1568,total_cost:84350.48,avg_csat:2.07},{category:"Electronics",return_reason:"Sizing / Fit Issue",cnt:1116,total_cost:57913.2,avg_csat:2.66},{category:"Electronics",return_reason:"Arrived Late",cnt:733,total_cost:38324.93,avg_csat:2.72},{category:"Home & Kitchen",return_reason:"Defective / Damaged",cnt:2639,total_cost:33895.34,avg_csat:2.07},{category:"Apparel",return_reason:"Defective / Damaged",cnt:4169,total_cost:30147.51,avg_csat:2.04},{category:"Electronics",return_reason:"Duplicate Order",cnt:444,total_cost:23127.79,avg_csat:2.75},{category:"Sports & Outdoors",return_reason:"Defective / Damaged",cnt:1374,total_cost:22573.72,avg_csat:2.04},{category:"Home & Kitchen",return_reason:"Item Not as Described",cnt:1753,total_cost:22219.79,avg_csat:2.72},{category:"Home & Kitchen",return_reason:"Changed Mind",cnt:1569,total_cost:19820.57,avg_csat:3.29},{category:"Apparel",return_reason:"Item Not as Described",cnt:2610,total_cost:19056.98,avg_csat:2.73},{category:"Home & Kitchen",return_reason:"Wrong Item Sent",cnt:1347,total_cost:17067.07,avg_csat:2.02},{category:"Apparel",return_reason:"Changed Mind",cnt:2292,total_cost:16744.13,avg_csat:3.3},{category:"Electronics",return_reason:"Gift / Unwanted",cnt:303,total_cost:15930.49,avg_csat:3.27},{category:"Apparel",return_reason:"Wrong Item Sent",cnt:2071,total_cost:15118.9,avg_csat:2.06},{category:"Sports & Outdoors",return_reason:"Item Not as Described",cnt:830,total_cost:13462.77,avg_csat:2.72},{category:"Home & Kitchen",return_reason:"Sizing / Fit Issue",cnt:1012,total_cost:12710.04,avg_csat:2.66},{category:"Sports & Outdoors",return_reason:"Changed Mind",cnt:751,total_cost:12176.18,avg_csat:3.29}]
+};
+let filters={category:'all',region:'all',year:'all',reason:'all'};
+const charts={};
+function applyFilters(){filters.category=document.getElementById('f-category').value;filters.region=document.getElementById('f-region').value;filters.year=document.getElementById('f-year').value;filters.reason=document.getElementById('f-reason').value;renderAll();}
+function resetFilters(){['f-category','f-region','f-year','f-reason'].forEach(id=>{document.getElementById(id).value='all';});filters={category:'all',region:'all',year:'all',reason:'all'};renderAll();}
+function destroy(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
+function updateKPIs(){const cats=RAW.by_category.filter(r=>filters.category==='all'||r.category===filters.category);const tot=cats.reduce((s,r)=>s+r.total_returns,0);const cost=cats.reduce((s,r)=>s+r.total_cost,0);document.getElementById('kpi-returns').textContent=tot.toLocaleString();document.getElementById('kpi-cost').textContent='$'+Math.round(cost).toLocaleString();document.getElementById('kpi-avgcost').textContent='$'+(tot>0?cost/tot:0).toFixed(2);document.getElementById('kpi-res').textContent='4.2 days';document.getElementById('kpi-csat').textContent='2.55 / 5';}
+function renderMonthly(){destroy('m');const d=RAW.monthly.filter(r=>filters.year==='all'||String(r.year)===filters.year);const ctx=document.getElementById('chartMonthly').getContext('2d');charts['m']=new Chart(ctx,{type:'bar',data:{labels:d.map(r=>r.month),datasets:[{type:'bar',label:'Returns',data:d.map(r=>r.total_returns),backgroundColor:'rgba(79,142,247,0.65)',borderRadius:3,yAxisID:'y'},{type:'line',label:'Avg Cost ($)',data:d.map(r=>r.avg_cost),borderColor:'#f59e0b',backgroundColor:'transparent',borderWidth:2,pointRadius:3,pointBackgroundColor:'#f59e0b',yAxisID:'y2',tension:0.4}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{boxWidth:12,padding:12}}},scales:{x:{grid:{color:'rgba(45,55,72,0.5)'},ticks:{maxTicksLimit:12}},y:{grid:{color:'rgba(45,55,72,0.5)'},title:{display:true,text:'Returns'},position:'left'},y2:{grid:{display:false},title:{display:true,text:'Avg Cost ($)'},position:'right',min:14,max:22}}}});}
+function renderSLA(){destroy('sla');const d=RAW.sla;const ctx=document.getElementById('chartSLA').getContext('2d');const sc=['#22c55e','#4f8ef7','#f59e0b','#ef4444'];charts['sla']=new Chart(ctx,{type:'doughnut',data:{labels:d.map(r=>r.sla_bucket),datasets:[{data:d.map(r=>r.return_count),backgroundColor:sc,borderWidth:2,borderColor:'#1a1d27',hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{display:false}}}});const leg=document.getElementById('sla-legend');leg.innerHTML=d.map((r,i)=>`<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;"><span style="width:10px;height:10px;border-radius:2px;background:${sc[i]};display:inline-block;"></span><span>${r.sla_bucket}: <strong>${r.pct}%</strong></span></div>`).join('');}
+function renderCategory(){destroy('cat');const d=RAW.by_category.filter(r=>filters.category==='all'||r.category===filters.category);const ctx=document.getElementById('chartCategory').getContext('2d');charts['cat']=new Chart(ctx,{type:'bar',data:{labels:d.map(r=>r.category),datasets:[{label:'Returns',data:d.map(r=>r.total_returns),backgroundColor:COLORS,borderRadius:4},{label:'Total Cost ($)',data:d.map(r=>r.total_cost),backgroundColor:COLORS.map(c=>c+'44'),borderColor:COLORS,borderWidth:1,borderRadius:4,yAxisID:'y2'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{boxWidth:12,padding:10}}},scales:{x:{grid:{color:'rgba(45,55,72,0.5)'}},y:{grid:{color:'rgba(45,55,72,0.5)'},title:{display:true,text:'Returns'}},y2:{grid:{display:false},title:{display:true,text:'Cost ($)'},position:'right'}}}});}
+function renderRegion(){destroy('reg');const d=RAW.by_region.filter(r=>filters.region==='all'||r.region===filters.region);const ctx=document.getElementById('chartRegion').getContext('2d');charts['reg']=new Chart(ctx,{data:{labels:d.map(r=>r.region),datasets:[{type:'bar',label:'Returns',data:d.map(r=>r.total_returns),backgroundColor:'#4f8ef7cc',borderRadius:4,yAxisID:'y'},{type:'line',label:'Avg CSAT',data:d.map(r=>r.avg_csat),borderColor:'#f59e0b',backgroundColor:'transparent',borderWidth:2,pointRadius:5,pointBackgroundColor:'#f59e0b',yAxisID:'y2',tension:0.3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{boxWidth:12,padding:10}}},scales:{x:{grid:{color:'rgba(45,55,72,0.5)'}},y:{grid:{color:'rgba(45,55,72,0.5)'},title:{display:true,text:'Returns'}},y2:{grid:{display:false},title:{display:true,text:'CSAT'},position:'right',min:2,max:3.5}}}});}
+function renderResolution(){destroy('res');const d=RAW.resolution;const ctx=document.getElementById('chartResolution').getContext('2d');charts['res']=new Chart(ctx,{type:'doughnut',data:{labels:d.map(r=>r.resolution_type),datasets:[{data:d.map(r=>r.return_count),backgroundColor:COLORS.slice(0,4),borderWidth:2,borderColor:'#1a1d27',hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'55%',plugins:{legend:{position:'bottom',labels:{boxWidth:12,padding:10}}}}});}
+function renderReasons(){destroy('rsn');const d=RAW.by_reason.filter(r=>filters.reason==='all'||r.return_reason===filters.reason);const ctx=document.getElementById('chartReasons').getContext('2d');charts['rsn']=new Chart(ctx,{data:{labels:d.map(r=>r.return_reason.length>22?r.return_reason.substring(0,22)+'...':r.return_reason),datasets:[{type:'bar',label:'Return Count',data:d.map(r=>r.return_count),backgroundColor:'rgba(124,92,191,0.7)',borderRadius:4,yAxisID:'y'},{type:'line',label:'Avg CSAT',data:d.map(r=>r.avg_csat),borderColor:'#2dd4bf',backgroundColor:'transparent',borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#2dd4bf',yAxisID:'y2',tension:0.3}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{boxWidth:12,padding:10}}},scales:{x:{grid:{color:'rgba(45,55,72,0.5)'}},y:{grid:{color:'rgba(45,55,72,0.5)'},title:{display:true,text:'Returns'}},y2:{grid:{display:false},title:{display:true,text:'CSAT'},position:'right',min:1.5,max:4}}}});}
+function renderHeatmap(){const d=RAW.heatmap.filter(r=>(filters.category==='all'||r.category===filters.category)&&(filters.reason==='all'||r.return_reason===filters.reason));const maxCost=Math.max(...d.map(r=>r.total_cost));document.getElementById('heatmap-body').innerHTML=d.map(row=>{const pct=(row.total_cost/maxCost*100).toFixed(0);const cc=row.avg_csat<2.3?'high':row.avg_csat<2.8?'med':'low';const share=(row.total_cost/RAW.summary.total_return_cost*100).toFixed(1);return`<tr><td>${row.category}</td><td>${row.return_reason}</td><td>${row.cnt.toLocaleString()}</td><td><strong>$${Math.round(row.total_cost).toLocaleString()}</strong></td><td>$${(row.total_cost/row.cnt).toFixed(2)}</td><td><span class="pill ${cc}">${row.avg_csat} ⭐</span></td><td><div class="bar-mini"><div class="fill" style="width:${pct}%;background:${row.total_cost>50000?'#ef4444':row.total_cost>20000?'#f59e0b':'#4f8ef7'};"></div><span>${share}%</span></div></td></tr>`}).join('');}
+function exportCSV(){const d=RAW.heatmap;const rows=d.map(r=>`${r.category},${r.return_reason},${r.cnt},${r.total_cost.toFixed(2)},${(r.total_cost/r.cnt).toFixed(2)},${r.avg_csat}`).join('\n');const blob=new Blob(['Category,Return Reason,Volume,Total Cost,Avg Cost,Avg CSAT\n'+rows],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`returns_export_${new Date().toISOString().slice(0,10)}.csv`;a.click();}
+function renderAll(){updateKPIs();renderMonthly();renderSLA();renderCategory();renderRegion();renderResolution();renderReasons();renderHeatmap();}
+renderAll();
+</script>
+</body>
+</html>
